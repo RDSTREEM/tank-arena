@@ -1,6 +1,6 @@
 # Tank Arena
 
-Tank Arena is a real-time multiplayer tank battle game. Players control tanks, navigate an arena, and compete to defeat opponents. The project is structured with a Go backend server and a client for gameplay.
+Tank Arena is a real-time multiplayer tank battle game built with Python and Pygame. Players control tanks, navigate an arena, and compete to defeat opponents in fast-paced battles. The project is structured for easy development and extension.
 
 ## Features
 - Real-time multiplayer gameplay
@@ -11,16 +11,17 @@ Tank Arena is a real-time multiplayer tank battle game. Players control tanks, n
 
 ## Project Structure
 ```
-go.mod, go.sum         # Go module files
 README.md              # Project documentation
-client/                # Game client (Go)
-server/                # Game server (Go)
+client/                # Game client (Python, Pygame)
+server/                # Game server (Python)
 shared/                # Shared code (protocols, types, utils)
+requirements.txt       # Python dependencies
 ```
 
 ## Getting Started
 ### Prerequisites
-- Go 1.18 or newer
+- Python 3.8 or newer
+- pip (Python package manager)
 
 ### Installation
 1. Clone the repository:
@@ -30,19 +31,19 @@ shared/                # Shared code (protocols, types, utils)
    ```
 2. Install dependencies:
    ```sh
-   go mod download
+   pip install -r requirements.txt
    ```
 
 ### Running the Server
 ```sh
 cd server
-go run main.go
+python main.py
 ```
 
 ### Running the Client
 ```sh
 cd client
-go run main.go
+python main.py
 ```
 
 ## How to Play
@@ -53,6 +54,3 @@ go run main.go
 
 ## Contributing
 Contributions are welcome! Please open issues or submit pull requests for improvements or bug fixes.
-
-## License
-This project is licensed under the MIT License.
