@@ -1,7 +1,7 @@
 import asyncio
-from server.client_handler import handle_client  # You'll implement this module
+from server.client_handler import handle_client
 
-HOST = '0.0.0.0'
+HOST = '192.168.8.112'
 PORT = 9000
 
 async def main():

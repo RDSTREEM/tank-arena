@@ -1,12 +1,13 @@
-import asyncio
+from server.world_state import players, Player
+import uuid
 import json
-
-connected_clients = []
 
 async def handle_client(reader, writer):
     addr = writer.get_extra_info('peername')
-    print(f"[CONNECT] New client connected: {addr}")
-    connected_clients.append(writer)
+    player_id = str(uuid.uuid4())[:8]
+    players[player_id] = Player(player_id, writer)
+    print(f"[CONNECT] {player_id} joined from {addr}")
+    await send_packet(writer, {"type": "init", "id": player_id})
 
     try:
         while True:
@@ -15,28 +16,36 @@ async def handle_client(reader, writer):
                 break
 
             message = data.decode().strip()
-            print(f"[RECV] {addr}: {message}")
-
-            try:
-                packet = json.loads(message)
-                await handle_packet(packet, writer)
-            except json.JSONDecodeError:
-                print(f"[ERROR] Invalid packet from {addr}")
-
-    except (asyncio.CancelledError, ConnectionResetError):
-        print(f"[DISCONNECT] Client {addr} lost connection")
+            packet = json.loads(message)
+            await handle_packet(packet, player_id)
+    except Exception as e:
+        print(f"[ERROR] {player_id}: {e}")
     finally:
-        connected_clients.remove(writer)
+        del players[player_id]
         writer.close()
         await writer.wait_closed()
-        print(f"[CLOSE] Client {addr} connection closed")
+        print(f"[DISCONNECT] {player_id} disconnected")
 
-async def handle_packet(packet, writer):
-    if packet.get("type") == "ping":
-        response = {"type": "pong"}
-        await send_packet(writer, response)
-
-async def send_packet(writer, data):
-    message = json.dumps(data) + "\n"
+async def send_packet(writer, packet):
+    message = json.dumps(packet) + "\n"
     writer.write(message.encode())
     await writer.drain()
+
+async def handle_packet(packet, player_id):
+    if packet["type"] == "update":
+        player = players[player_id]
+        player.x = packet["x"]
+        player.y = packet["y"]
+        player.angle = packet["angle"]
+        await broadcast_world_state()
+
+async def broadcast_world_state():
+    state = {
+        "type": "world_state",
+        "players": [
+            {"id": p.id, "x": p.x, "y": p.y, "angle": p.angle}
+            for p in players.values()
+        ]
+    }
+    for p in players.values():
+        await send_packet(p.writer, state)
