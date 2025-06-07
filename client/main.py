@@ -1,4 +1,5 @@
 import pygame
+import asyncio
 from client.game import Game
 
 WIDTH, HEIGHT = 800, 600
@@ -11,6 +12,7 @@ def main():
     clock = pygame.time.Clock()
 
     game = Game(WIDTH, HEIGHT)
+    loop = asyncio.get_event_loop()
 
     running = True
     while running:
@@ -22,8 +24,9 @@ def main():
         game.handle_input()
         game.update(dt)
         game.draw(screen)
-
         pygame.display.flip()
+        # Allow asyncio tasks to run
+        loop.run_until_complete(asyncio.sleep(0))
 
     pygame.quit()
 

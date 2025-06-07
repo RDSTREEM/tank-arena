@@ -5,5 +5,6 @@ class Player:
         self.y = 300
         self.angle = 0
         self.writer = writer
+        # Add more state as needed (e.g., bullets)
 
 players = {}

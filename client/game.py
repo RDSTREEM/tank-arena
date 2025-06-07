@@ -1,5 +1,7 @@
 import pygame
 import math
+import asyncio
+from client.network import NetworkClient
 
 TANK_SPEED = 200 
 TANK_ROT_SPEED = 200
@@ -38,6 +40,27 @@ class Game:
         pygame.draw.circle(self.tank_image, (0, 100, 0), (10, 15), 6)
         self.bullets = []
         self.shoot_cooldown = 0
+        self.network = NetworkClient()
+        self.player_id = None
+        self.other_players = {}  # id: {'x':..., 'y':..., 'angle':...}
+        self.network_task = asyncio.create_task(self.network_main())
+
+    async def network_main(self):
+        await self.network.connect()
+        # Wait for init packet
+        while True:
+            msg = await self.network.get_message()
+            if msg.get('type') == 'init':
+                self.player_id = msg['id']
+                break
+        # Start listening for world state
+        asyncio.create_task(self.listen_world_state())
+
+    async def listen_world_state(self):
+        while True:
+            msg = await self.network.get_message()
+            if msg.get('type') == 'world_state':
+                self.other_players = {p['id']: p for p in msg['players'] if p['id'] != self.player_id}
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -58,6 +81,15 @@ class Game:
             self.bullets.append(bullet)
             self.shoot_cooldown = 0.25  # 250ms cooldown
 
+        # After movement, send update to server
+        if self.player_id:
+            asyncio.create_task(self.network.send({
+                'type': 'update',
+                'x': self.tank_pos.x,
+                'y': self.tank_pos.y,
+                'angle': self.tank_angle
+            }))
+
     def update(self, dt):
         self.dt = dt
         if self.shoot_cooldown > 0:
@@ -73,6 +105,11 @@ class Game:
         rotated_image = pygame.transform.rotate(self.tank_image, self.tank_angle)
         rect = rotated_image.get_rect(center=self.tank_pos)
         surface.blit(rotated_image, rect.topleft)
+        # Draw other players
+        for p in self.other_players.values():
+            tank_img = pygame.transform.rotate(self.tank_image, p['angle'])
+            rect = tank_img.get_rect(center=(p['x'], p['y']))
+            surface.blit(tank_img, rect.topleft)
         # Draw bullets
         for bullet in self.bullets:
             bullet.draw(surface)
