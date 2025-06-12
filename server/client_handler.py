@@ -1,6 +1,7 @@
-from server.world_state import players, Player
+from server.world_state import players, Player, bullets, Bullet
 import uuid
 import json
+import math
 
 async def handle_client(reader, writer):
     addr = writer.get_extra_info('peername')
@@ -38,13 +39,28 @@ async def handle_packet(packet, player_id):
         player.y = packet["y"]
         player.angle = packet["angle"]
         await broadcast_world_state()
+    elif packet["type"] == "shoot":
+        b = Bullet(player_id, packet["x"], packet["y"], packet["angle"])
+        bullets.append(b)
+        await broadcast_world_state()
 
 async def broadcast_world_state():
+    # Move bullets
+    dt = 1/60  # Assume 60 FPS tick for now
+    width, height = 800, 600
+    for b in bullets:
+        b.update(dt, width, height)
+    # Remove dead bullets
+    bullets[:] = [b for b in bullets if b.alive]
     state = {
         "type": "world_state",
         "players": [
             {"id": p.id, "x": p.x, "y": p.y, "angle": p.angle}
             for p in players.values()
+        ],
+        "bullets": [
+            {"owner_id": b.owner_id, "x": b.x, "y": b.y, "angle": b.angle}
+            for b in bullets if b.alive
         ]
     }
     for p in players.values():

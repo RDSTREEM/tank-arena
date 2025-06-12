@@ -61,6 +61,8 @@ class Game:
             msg = await self.network.get_message()
             if msg.get('type') == 'world_state':
                 self.other_players = {p['id']: p for p in msg['players'] if p['id'] != self.player_id}
+                # Sync bullets from server
+                self.bullets = [Bullet((b['x'], b['y']), b['angle']) for b in msg.get('bullets', [])]
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -76,9 +78,13 @@ class Game:
             self.tank_pos -= direction * TANK_SPEED * self.dt
 
         # Shooting with space bar
-        if keys[pygame.K_SPACE] and self.shoot_cooldown <= 0:
-            bullet = Bullet(self.tank_pos, self.tank_angle)
-            self.bullets.append(bullet)
+        if keys[pygame.K_SPACE] and self.shoot_cooldown <= 0 and self.player_id:
+            asyncio.create_task(self.network.send({
+                'type': 'shoot',
+                'x': self.tank_pos.x,
+                'y': self.tank_pos.y,
+                'angle': self.tank_angle
+            }))
             self.shoot_cooldown = 0.25  # 250ms cooldown
 
         # After movement, send update to server
@@ -94,11 +100,7 @@ class Game:
         self.dt = dt
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= dt
-        # Update bullets
-        for bullet in self.bullets:
-            bullet.update(dt, self.width, self.height)
-        # Remove dead bullets
-        self.bullets = [b for b in self.bullets if b.alive]
+        # No local bullet update, bullets are synced from server
 
     def draw(self, surface):
         surface.fill((30, 30, 30))
