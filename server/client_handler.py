@@ -1,4 +1,5 @@
-from server.world_state import players, Player, bullets, Bullet
+from server.world_state import players, bullets
+from shared.entities import Player, Bullet
 import uuid
 import json
 import math
