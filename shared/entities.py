@@ -23,3 +23,21 @@ class Player:
         self.angle = 0
         self.writer = writer
         self.health = 3
+
+class PowerUp:
+    def __init__(self, powerup_id, x, y, type):
+        self.id = powerup_id
+        self.x = x
+        self.y = y
+        self.type = type  # e.g., 'health', 'speed', 'shield', etc.
+        self.active = True
+
+    def apply(self, player):
+        if self.type == 'health':
+            player.health += 1
+        elif self.type == 'speed':
+            player.speed = getattr(player, 'speed', 1.0) * 1.5
+        elif self.type == 'shield':
+            player.shield = True
+        # Add more powerup types as needed
+        self.active = False
