@@ -53,6 +53,7 @@ async def broadcast_world_state():
     # Collision detection: bullets vs players
     bullet_radius = 5
     player_radius = 20
+    players_to_remove = []
     for b in bullets:
         if not b.alive:
             continue
@@ -64,16 +65,20 @@ async def broadcast_world_state():
             dist = math.hypot(dx, dy)
             if dist < bullet_radius + player_radius:
                 b.alive = False
-                # Example: remove player on hit (customize as needed)
-                print(f"[HIT] Player {p.id} was hit by {b.owner_id}")
-                del players[p.id]
+                p.health -= 1
+                print(f"[HIT] Player {p.id} was hit by {b.owner_id}, health: {p.health}")
+                if p.health <= 0:
+                    players_to_remove.append(p.id)
                 break
+    # Remove dead players
+    for pid in players_to_remove:
+        del players[pid]
     # Remove dead bullets
     bullets[:] = [b for b in bullets if b.alive]
     state = {
         "type": "world_state",
         "players": [
-            {"id": p.id, "x": p.x, "y": p.y, "angle": p.angle}
+            {"id": p.id, "x": p.x, "y": p.y, "angle": p.angle, "health": p.health}
             for p in players.values()
         ],
         "bullets": [

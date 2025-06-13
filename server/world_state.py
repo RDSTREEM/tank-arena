@@ -24,6 +24,7 @@ class Player:
         self.y = 300
         self.angle = 0
         self.writer = writer
+        self.health = 3  # Add health system, default 3
         # Add more state as needed (e.g., bullets)
 
 players = {}
