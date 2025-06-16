@@ -15,6 +15,21 @@ class Bullet:
         if self.x < 0 or self.x > width or self.y < 0 or self.y > height:
             self.alive = False
 
+    def to_dict(self):
+        return {
+            'owner_id': self.owner_id,
+            'x': self.x,
+            'y': self.y,
+            'angle': self.angle,
+            'alive': self.alive
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        b = cls(data['owner_id'], data['x'], data['y'], data['angle'])
+        b.alive = data.get('alive', True)
+        return b
+
 class Player:
     def __init__(self, player_id, writer=None):
         self.id = player_id
@@ -23,6 +38,24 @@ class Player:
         self.angle = 0
         self.writer = writer
         self.health = 3
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'x': self.x,
+            'y': self.y,
+            'angle': self.angle,
+            'health': self.health
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        p = cls(data['id'])
+        p.x = data['x']
+        p.y = data['y']
+        p.angle = data['angle']
+        p.health = data.get('health', 3)
+        return p
 
 class PowerUp:
     def __init__(self, powerup_id, x, y, type):
@@ -41,3 +74,18 @@ class PowerUp:
             player.shield = True
         # Add more powerup types as needed
         self.active = False
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'x': self.x,
+            'y': self.y,
+            'type': self.type,
+            'active': self.active
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        pu = cls(data['id'], data['x'], data['y'], data['type'])
+        pu.active = data.get('active', True)
+        return pu
